@@ -1,0 +1,80 @@
+*&---------------------------------------------------------------------*
+*& Include          ZFU_DYNAMIC_PBO
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Module STATUS_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+
+
+
+  SET PF-STATUS '0100'.
+
+
+  IF gv_cl_gui IS INITIAL.
+
+    gs_layout = VALUE #( zebra      = 'X'
+                         grid_title = 'Öğretmen Tablosu'
+                         sel_mode   = 'A'
+                         cwidth_opt = 'X'
+                         info_fname = 'LINECOLOR' ).
+
+
+    CREATE OBJECT gv_cl_gui
+      EXPORTING
+        i_parent = cl_gui_container=>screen0.
+
+    PERFORM dropdown_list.
+
+*    CREATE OBJECT go_spfli
+*      EXPORTING
+*        parent            = cl_gui_container=>screen0                    " Parent Container
+*        rows              = 2                   " Number of Rows to be displayed
+*        columns           = 1                   " Number of Columns to be Displayed
+*      EXCEPTIONS
+*        cntl_error        = 1                  " See Superclass
+*        cntl_system_error = 2                  " See Superclass
+*        OTHERS            = 3.
+*
+*    CALL METHOD go_spfli->get_container
+*      EXPORTING
+*        row       = 1               " Row
+*        column    = 1               " Column
+*      RECEIVING
+*        container = go_sub1.                 " Container
+*
+**        CALL METHOD go_spli->get_container
+**      EXPORTING
+**        row       = 2               " Row
+**        column    = 1               " Column
+**      RECEIVING
+**        container = go_sub2.                 " Container
+
+    CALL METHOD gv_cl_gui->register_edit_event EXPORTING i_event_id = cl_gui_alv_grid=>mc_evt_enter.
+*    CALL METHOD gv_cl_gui->register_edit_event EXPORTING i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+
+    CREATE OBJECT event_receiver1.
+    SET HANDLER event_receiver1->handle_data_changed FOR gv_cl_gui.
+
+
+
+
+
+    CALL METHOD gv_cl_gui->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = <dyn_table>                             " Output Table
+        it_fieldcatalog = gt_fieldcat2.
+
+
+  ELSE.
+    CALL METHOD gv_cl_gui->check_changed_data.
+    CALL METHOD gv_cl_gui->refresh_table_display.
+
+
+  ENDIF.
+
+ENDMODULE.

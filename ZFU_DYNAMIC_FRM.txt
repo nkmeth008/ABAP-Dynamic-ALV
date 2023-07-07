@@ -1,0 +1,459 @@
+
+
+FORM set_screen .
+
+  IF rad_0 = 'X'.
+
+    LOOP AT SCREEN.
+
+      IF screen-group1 = 'PR2'.
+        screen-active = 0.
+        MODIFY SCREEN.
+      ELSE.
+        screen-active = 1.
+        MODIFY SCREEN.
+      ENDIF.
+
+    ENDLOOP.
+
+  ELSEIF rad_1 = 'X'.
+
+    LOOP AT SCREEN.
+
+      IF screen-group1 = 'PRS'.
+        screen-active = 0.
+        MODIFY SCREEN.
+      ELSE.
+        screen-active = 1.
+        MODIFY SCREEN.
+      ENDIF.
+
+    ENDLOOP.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Formogretmen_ekle
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM ogretmen_ekle .
+
+  IF p_ad IS INITIAL AND p_soyad IS INITIAL AND p_ders  IS INITIAL .
+
+    MESSAGE 'BOŞ ALAN BIRAKMAYINIZ!' TYPE 'I'.
+    EXIT.
+
+  ELSE.
+
+CALL FUNCTION 'ZFU_ID_FM'
+  EXPORTING
+    p_ad          = p_ad
+    p_soyad       = p_soyad
+    p_ders        = p_ders
+  IMPORTING
+   P_ID          = numc10.
+
+IF sy-subrc IS INITIAL.
+      CONCATENATE numc10 'ID`li Öğretmen Kaydı Oluşturuldu. ' INTO DATA(msg) SEPARATED BY space.
+      MESSAGE msg TYPE 'I'.
+    ENDIF.
+
+  ENDIF.
+
+
+
+ENDFORM.
+
+FORM p_ders1_shelp .
+
+  DATA: t_return TYPE ddshretval OCCURS 0 WITH HEADER LINE.
+
+  SELECT P_DERS
+         FROM
+         ZFU_DERS_TABLO
+         INTO TABLE @DATA(t_ders).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'P_DERS'
+      value_org       = 'S'
+    TABLES
+      value_tab       = t_ders
+      return_tab      = t_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+  p_dprtmn = t_return-fieldval.
+
+ENDFORM.
+
+FORM p_ders_shelp .
+
+  DATA: t_return TYPE ddshretval OCCURS 0 WITH HEADER LINE.
+
+  SELECT P_DERS
+         FROM
+         ZFU_DERS_TABLO
+         INTO TABLE @DATA(t_ders).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'P_DERS'
+      value_org       = 'S'
+    TABLES
+      value_tab       = t_ders
+      return_tab      = t_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+  p_ders = t_return-fieldval.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form p_dnm_shelp
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM p_dnm_shelp .
+
+  CALL FUNCTION 'POPUP_TO_SELECT_MONTH'
+    EXPORTING
+      actual_month               = sy-datum(6)
+    IMPORTING
+      selected_month             = p_donem
+    EXCEPTIONS
+      factory_calendar_not_found = 1
+      holiday_calendar_not_found = 2
+      month_not_found            = 3
+      OTHERS                     = 4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form LAST_DAY_OF_MONTH
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM last_day_of_month .
+
+  CONCATENATE  p_donem '01'  INTO DATA(p_tmp).
+  v_deneme2 = p_tmp.
+
+  CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+    EXPORTING
+      day_in            = v_deneme2
+    IMPORTING
+      last_day_of_month = v_deneme
+    EXCEPTIONS
+      day_in_no_date    = 1
+      OTHERS            = 2.
+
+  lst_day = v_deneme+6.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_data .
+
+  IF p_ders = '' .
+
+  SELECT *
+     FROM ZFU_OGRT_BILGI
+     INTO TABLE bilgi_tablosu.
+
+  ELSE  .
+
+  SELECT *
+     FROM ZFU_OGRT_BILGI
+     INTO TABLE bilgi_tablosu
+     WHERE p_ders EQ p_dprtmn.
+
+  ENDIF.
+
+
+  SELECT *
+    FROM ZFU_OGRT_TABLO
+    INTO TABLE ders_tablosu.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form dinamik_tablo_olustur
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM dinamik_tablo_olustur .
+
+  DATA : i_sayi          TYPE i,
+         i_sayi_char(2)  TYPE c,
+         v_index         TYPE sy-tabix,
+         i_first_sayi(2) TYPE c,
+         i_first_value   TYPE i VALUE 1.
+
+  i_sayi_char = lst_day.
+  i_sayi      = i_sayi_char.
+
+  CLEAR gs_fieldcat2.
+  gs_fieldcat2-fieldname = 'P_ID'.
+  gs_fieldcat2-scrtext_s = 'Öğretmen ID'.
+  gs_fieldcat2-scrtext_m = 'Öğretmen ID'.
+  gs_fieldcat2-scrtext_l = 'Öğretmen ID'.
+  APPEND gs_fieldcat2 TO gt_fieldcat2.
+
+  CLEAR gs_fieldcat2.
+  gs_fieldcat2-fieldname = 'P_AD'.
+  gs_fieldcat2-scrtext_s = 'Öğretmen Ad'.
+  gs_fieldcat2-scrtext_m = 'Öğretmen Ad'.
+  gs_fieldcat2-scrtext_l = 'Öğretmen Ad'.
+  APPEND gs_fieldcat2 TO gt_fieldcat2.
+
+  CLEAR gs_fieldcat2.
+  gs_fieldcat2-fieldname = 'P_SOYAD'.
+  gs_fieldcat2-scrtext_s = 'Öğretmen Soyad'.
+  gs_fieldcat2-scrtext_m = 'Öğretmen Soyad'.
+  gs_fieldcat2-scrtext_l = 'Öğretmen Soyad'.
+  APPEND gs_fieldcat2 TO gt_fieldcat2.
+
+  CLEAR gs_fieldcat2.
+  gs_fieldcat2-fieldname = 'P_DERS'.
+  gs_fieldcat2-scrtext_s = 'Öğretmen Ders'.
+  gs_fieldcat2-scrtext_m = 'Öğretmen Ders'.
+  gs_fieldcat2-scrtext_l = 'Öğretmen Ders'.
+  APPEND gs_fieldcat2 TO gt_fieldcat2.
+
+  DO i_sayi TIMES.
+
+    CLEAR : i_sayi_char.
+
+    i_sayi_char = i_first_value.
+    i_sayi_char = |{ i_sayi_char ALPHA = IN }|.
+
+    CLEAR gs_fieldcat2.
+    gs_fieldcat2-fieldname = 'COL' && i_sayi_char .
+
+    gs_fieldcat2-scrtext_s = gs_fieldcat2-scrtext_m = gs_fieldcat2-scrtext_l
+    = i_sayi_char && '.' &&
+      p_donem+4(2) && '.' &&
+      p_donem+0(4).
+
+    gs_fieldcat2-edit      = 'X'.
+    gs_fieldcat2-drdn_hndl = '2'.
+    APPEND gs_fieldcat2 TO gt_fieldcat2.
+
+    i_first_value = i_first_value + 1.
+
+  ENDDO.
+
+
+  CALL METHOD cl_alv_table_create=>create_dynamic_table
+    EXPORTING
+      it_fieldcatalog = gt_fieldcat2
+    IMPORTING
+      ep_table        = new_table.
+
+  ASSIGN new_table->* TO <dyn_table>.
+
+
+*  <dyn_table> = CORRESPONDING #( ders_tablosu ).
+* MOVE-CORRESPONDING ders_tablosu TO <dyn_table> .
+
+  CREATE DATA new_line LIKE LINE OF <dyn_table>.
+  ASSIGN new_line->* TO <dyn_wa>.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form build_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM  build_data .
+
+  DATA : i_sayi          TYPE i,
+         i_sayi_char(2)  TYPE c,
+         v_index         TYPE sy-tabix,
+         i_first_sayi(2) TYPE c,
+         i_first_value   TYPE i VALUE 1.
+
+  i_sayi_char = lst_day.
+  i_sayi      = i_sayi_char.
+
+  LOOP AT bilgi_tablosu INTO DATA(s_datam).
+
+    CLEAR : <dyn_wa>.
+
+    CLEAR : fieldname, fieldvalue.
+    fieldname  = 'P_AD'.
+    fieldvalue = s_datam-p_ad.
+    CONDENSE fieldvalue.
+    ASSIGN COMPONENT fieldname OF STRUCTURE <dyn_wa> TO <fs1>.
+    <fs1> = fieldvalue.
+
+    CLEAR : fieldname, fieldvalue.
+    fieldname  = 'P_SOYAD'.
+    fieldvalue = s_datam-p_soyad.
+    CONDENSE fieldvalue.
+    ASSIGN COMPONENT fieldname OF STRUCTURE <dyn_wa> TO <fs1>.
+    <fs1> = fieldvalue.
+
+    CLEAR : fieldname, fieldvalue.
+    fieldname  = 'P_ID'.
+    fieldvalue = s_datam-p_id.
+    CONDENSE fieldvalue.
+    ASSIGN COMPONENT fieldname OF STRUCTURE <dyn_wa> TO <fs1>.
+    <fs1> = fieldvalue.
+
+    CLEAR : fieldname, fieldvalue.
+    fieldname  = 'P_DERS'.
+    fieldvalue = s_datam-p_ders.
+    CONDENSE fieldvalue.
+    ASSIGN COMPONENT fieldname OF STRUCTURE <dyn_wa> TO <fs1>.
+    <fs1> = fieldvalue.
+
+
+    DO i_sayi TIMES.
+
+
+      i_sayi_char = i_first_value.
+      i_sayi_char = |{ i_sayi_char ALPHA = IN }|.
+
+
+      CLEAR : fieldname, fieldvalue.
+      fieldname = 'COL' && i_sayi_char.
+      DATA(tarih) = p_donem && fieldname+3(2).
+      READ TABLE ders_tablosu INTO ders_tipi WITH KEY p_id = s_datam-p_id
+                                                               P_TARIH = tarih.                                                              .
+      IF sy-subrc IS INITIAL.
+        fieldvalue = ders_tipi-p_verdi.
+        CONDENSE fieldvalue.
+        ASSIGN COMPONENT fieldname OF STRUCTURE <dyn_wa> TO <fs1>.
+        <fs1> = fieldvalue.
+
+      ENDIF.
+
+
+
+
+      i_first_value = i_first_value + 1.
+    ENDDO.
+    APPEND <dyn_wa> TO <dyn_table>.
+    i_first_value = 1.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form dropdown_list
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM dropdown_list .
+
+  CLEAR:ls_dropdown.
+  ls_dropdown-value  = 'Sabahçı'.
+  ls_dropdown-handle = 2.
+  APPEND ls_dropdown TO lt_dropdown.
+
+  CLEAR:ls_dropdown.
+  ls_dropdown-value  = 'Öğlenci'.
+  ls_dropdown-handle = 2.
+  APPEND ls_dropdown TO lt_dropdown.
+
+  CLEAR:ls_dropdown.
+  ls_dropdown-value  = 'Gececi'.
+  ls_dropdown-handle = 2.
+  APPEND ls_dropdown TO lt_dropdown.
+
+  CLEAR:ls_dropdown.
+  ls_dropdown-value  = 'Uzaktan'.
+  ls_dropdown-handle = 2.
+  APPEND ls_dropdown TO lt_dropdown.
+
+  gv_cl_gui->set_drop_down_table(
+    EXPORTING
+      it_drop_down       =  lt_dropdown ).
+
+ENDFORM.
+
+FORM adobe_form.
+
+
+
+  gv_barcode = '312314123'.
+
+
+
+  gs_outputparams-nodialog = abap_true.
+  gs_outputparams-preview = abap_true.
+  gs_outputparams-dest = 'LP01'.
+
+  CALL FUNCTION 'FP_JOB_OPEN'
+    CHANGING
+      ie_outputparams = gs_outputparams
+    EXCEPTIONS
+      cancel          = 1
+      usage_error     = 2
+      system_error    = 3
+      internal_error  = 4
+      OTHERS          = 5.
+
+  gv_name = 'ZFU_AF_FORM'.
+
+  CALL FUNCTION 'FP_FUNCTION_MODULE_NAME'
+    EXPORTING
+      i_name     = gv_name
+    IMPORTING
+      e_funcname = gv_funcname.
+
+  CALL FUNCTION gv_funcname
+    EXPORTING
+      /1bcdwb/docparams  = gs_docparams
+      iv_barcode         = gv_barcode
+    IMPORTING
+      /1bcdwb/formoutput = gs_formoutput
+    EXCEPTIONS
+      usage_error        = 1
+      system_error       = 2
+      internal_error     = 3
+      OTHERS             = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  CALL FUNCTION 'FP_JOB_CLOSE'
+
+           EXCEPTIONS
+             USAGE_ERROR          = 1
+             SYSTEM_ERROR         = 2
+             INTERNAL_ERROR       = 3
+             OTHERS               = 4.
+
+
+  ENDFORM.

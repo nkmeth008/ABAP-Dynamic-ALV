@@ -1,0 +1,87 @@
+*&---------------------------------------------------------------------*
+*& Include          ZFU_DYNAMIC_TOP
+*&---------------------------------------------------------------------*
+CLASS lcl_event_handler DEFINITION DEFERRED.
+
+DATA: lt_dropdown TYPE lvc_t_drop,
+      ls_dropdown TYPE lvc_s_drop.
+
+DATA : gv_cont      TYPE REF TO cl_gui_custom_container,
+       gv_cl_gui    TYPE REF TO cl_gui_alv_grid,
+       gt_fieldcat2 TYPE lvc_t_fcat,
+       gs_fieldcat2 TYPE lvc_s_fcat.
+
+DATA wa_vardiya TYPE ZFU_OGRT_TABLO.
+
+DATA: event_receiver1  TYPE REF TO lcl_event_handler.
+
+DATA: go_spfli TYPE REF TO cl_gui_splitter_container,
+      go_sub1  TYPE REF TO cl_gui_container,
+      go_sub2  TYPE REF TO cl_gui_container.
+
+DATA : gt_alv TYPE ZFU_S_PROJE OCCURS 0,
+       gs_alv TYPE ZFU_S_PROJE.
+
+DATA : bilgi_tablosu      TYPE STANDARD TABLE OF ZFU_OGRT_BILGI.
+DATA : ders_tablosu   TYPE STANDARD TABLE OF ZFU_OGRT_TABLO.
+DATA : ders_tipi TYPE ZFU_OGRT_TABLO.
+
+DATA : gt_pyt   TYPE STANDARD TABLE OF ZFU_OGRT_BILGI.
+
+DATA : gt_row_good TYPE lvc_s_modi OCCURS 0 WITH HEADER LINE.
+
+
+FIELD-SYMBOLS: <gt_fieldcat2> TYPE lvc_s_fcat.
+
+DATA: gs_layout TYPE lvc_s_layo.
+
+DATA numc10 TYPE numc10.
+
+DATA: v_deneme  LIKE sy-datum,
+      v_deneme2 LIKE sy-datum.
+
+DATA lst_day LIKE sy-datum.
+
+SELECTION-SCREEN : BEGIN OF BLOCK blk2 WITH FRAME TITLE TEXT-002.
+  PARAMETERS       : rad_0 RADIOBUTTON GROUP rad DEFAULT 'X',
+                     rad_1 RADIOBUTTON GROUP rad.
+
+SELECTION-SCREEN : END OF BLOCK blk2.
+
+
+SELECTION-SCREEN : BEGIN OF BLOCK blk1 WITH FRAME TITLE TEXT-001.
+  PARAMETERS:
+    p_ad    TYPE ZFU_AD_DE     MODIF ID prs,
+    p_soyad TYPE ZFU_SOYAD_DE  MODIF ID prs,
+    p_ders   TYPE ZFU_DERS_DE     MODIF ID prs.
+
+  PARAMETERS:
+    p_dprtmn TYPE char10    MODIF ID pr2,
+    p_donem  TYPE spmon     MODIF ID pr2.
+
+SELECTION-SCREEN : END OF BLOCK blk1.
+
+
+SELECTION-SCREEN : PUSHBUTTON 1(20) TEXT-020 USER-COMMAND cli2 MODIF ID prs.
+
+DATA : gv_uname    TYPE sy-uname,
+       gv_date(10) TYPE c.
+
+FIELD-SYMBOLS : <dyn_table> TYPE STANDARD TABLE,
+                <dyn_table2> TYPE STANDARD TABLE,
+                <dyn_wa>,  "for dynamic table
+                <dyn_wa2>,
+                <fs1>.
+
+DATA : new_table TYPE REF TO data,
+       new_line  TYPE REF TO data.
+
+DATA : fieldname(20)  TYPE c,
+       fieldvalue(60) TYPE c.
+
+DATA: gs_outputparams TYPE sfpoutputparams,
+      gv_name TYPE fpname,
+      gv_funcname TYPE funcname,
+      gs_docparams TYPE sfpdocparams,
+      gs_formoutput TYPE fpformoutput,
+      gv_barcode TYPE char10.

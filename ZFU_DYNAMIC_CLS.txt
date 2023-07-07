@@ -1,0 +1,54 @@
+*&---------------------------------------------------------------------*
+*& Include          ZAP_PROJE_CLS
+*&---------------------------------------------------------------------*
+CLASS lcl_event_handler DEFINITION.
+  PUBLIC SECTION.
+    METHODS handle_data_changed
+      FOR EVENT data_changed OF cl_gui_alv_grid
+      IMPORTING
+        er_data_changed
+        e_onf4
+        e_onf4_before
+        e_onf4_after
+        e_ucomm.
+
+    METHODS handle_top_of_page
+      FOR EVENT top_of_page OF cl_gui_alv_grid
+      IMPORTING
+        e_dyndoc_id
+        table_index.
+ENDCLASS.
+
+
+CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD handle_data_changed.
+    DATA: ls_modi TYPE lvc_s_modi,
+          srt     TYPE char200.
+
+    LOOP AT er_data_changed->mt_good_cells INTO ls_modi.
+      READ TABLE  <dyn_table> INTO <dyn_wa> INDEX ls_modi-row_id.
+      IF sy-subrc EQ 0.
+
+        READ TABLE bilgi_tablosu INTO DATA(canim_s_datam) INDEX ls_modi-row_id.
+        IF sy-subrc IS INITIAL.
+          ders_tipi-p_id = canim_s_datam-p_id.
+          ders_tipi-p_ders = canim_s_datam-p_ders.
+        ENDIF.
+        DATA(tarih) = p_donem && ls_modi-fieldname+3(2).
+        ders_tipi-p_tarih = tarih.
+        ders_tipi-p_verdi = ls_modi-value.
+
+      ENDIF.
+      INSERT ZFU_OGRT_TABLO FROM  ders_tipi.
+    ENDLOOP.
+
+
+
+  ENDMETHOD.
+
+  METHOD handle_top_of_page.
+    BREAK-POINT.
+  ENDMETHOD.
+
+ENDCLASS.

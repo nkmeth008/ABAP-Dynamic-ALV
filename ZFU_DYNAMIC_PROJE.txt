@@ -1,0 +1,42 @@
+*&---------------------------------------------------------------------*
+*& Report ZFU_DYNAMIC_PROJE
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZFU_DYNAMIC_PROJE.
+
+INCLUDE ZFU_DYNAMIC_TOP.
+INCLUDE ZFU_DYNAMIC_CLS.
+INCLUDE ZFU_DYNAMIC_PBO.
+INCLUDE ZFU_DYNAMIC_PAI.
+INCLUDE ZFU_DYNAMIC_FRM.
+
+
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM set_screen.
+
+AT SELECTION-SCREEN.
+  IF sy-ucomm = 'CLI2'.
+    PERFORM ogretmen_ekle.
+  ENDIF.
+
+
+
+
+
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_ders.
+  PERFORM p_ders_shelp.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_dprtmn.
+  PERFORM p_ders1_shelp.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_donem.
+  PERFORM p_dnm_shelp.
+
+START-OF-SELECTION.
+  PERFORM last_day_of_month.
+  PERFORM get_data.
+  PERFORM dinamik_tablo_olustur.
+  PERFORM build_data.
+  CALL SCREEN 0100.
